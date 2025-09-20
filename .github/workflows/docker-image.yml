@@ -55,7 +55,7 @@ jobs:
           # ★★★★★ 절대로 겹치지 않는 고유한 버전 레이블
           version_label: app-${{ github.event.pull_request.merge_commit_sha }}
           deployment_package: Dockerrun.aws.json
-          use_existing_version_if_available: true
+          use_existing_version_if_available: false
 
 # jobs:
 #   # jobname
