@@ -10,6 +10,7 @@
       "HostPort": 8000
     }
   ],
+  
   "Environment": {
     "DB_NAME": "$DB_NAME",
     "DB_USER": "$DB_USER",
@@ -19,5 +20,4 @@
   },
   "Volumes": [],
   "Logging": "/var/log/nginx"
-
 }

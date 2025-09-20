@@ -1,27 +1,25 @@
-# --- 1단계: 빌드 스테이지 (무거운 것들 설치하는 작업장) ---
-# 여기서 모든 라이브러리를 설치할 거야.
-FROM python:3.12 AS builder
+# Dockerfile
 
-WORKDIR /app
-
-# requirements.txt 복사
-COPY requirements.txt .
-
-# 라이브러리 설치 (이 과정이 무거움)
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-
-# --- 2단계: 최종 스테이지 (깨끗하고 가벼운 최종 이미지) ---
-# 완전히 새로운, 깨끗한 파이썬 이미지에서 시작
+# Python 3.12 이미지를 기반으로 사용
 FROM python:3.12
 
+# 환경 변수 설정
+# .pyc 파일 생성 방지
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Python 출력 버퍼링 방지
+ENV PYTHONUNBUFFERED=1
+
+# 작업 디렉토리 생성 및 설정 (그냥 app 으로 작성해도 돰) !!!!
 WORKDIR /app
 
-# 중요! 1단계(builder)에서 설치한 라이브러리 파일들만 쏙 빼서 복사해오는 마법 같은 명령어
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+# 의존성 파일 복사 및 설치
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# 이제 네 소스 코드를 복사
+# 프로젝트 파일을 image 내부 WORKDIR로 복사
 COPY . .
 
-# 서버 실행
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "config.wsgi:application"]
+# Gunicorn으로 Django 실행
+ENTRYPOINT ["gunicorn", "-c", "gunicorn.conf.py"]
+EXPOSE 8000
