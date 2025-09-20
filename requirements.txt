@@ -1,8 +1,6 @@
 # requirements.txt (배포용)
-# Django==5.2.5
-# gunicorn==23.0.0
-uvicorn==0.29.0
-fastapi==0.110.0
+Django==5.2.5
+gunicorn==23.0.0
 mysqlclient==2.2.7
 pymysql==1.1.1
 boto3==1.34.142
