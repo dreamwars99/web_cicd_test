@@ -34,7 +34,7 @@ jobs:
           mkdir -p bundle
           cp Dockerrun.aws.json bundle/
           cd bundle
-          zip -r ../deploy-${{ github.sha }}.zip .  # zip 루트에 파일이 오도록 생성
+          zip -r ../deploy-${{ github.sha }}.zip .
         # ↑ Dockerrun만 있어도 단일 컨테이너 배포 가능(EB 공식 문서) :contentReference[oaicite:3]{index=3}
 
       - name: Beanstalk Deploy
