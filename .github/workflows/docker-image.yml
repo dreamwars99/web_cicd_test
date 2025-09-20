@@ -1,11 +1,15 @@
 name: Django CICD App
 
+# on:
+#   pull_request_target:
+#     branches:
+#       - main
+#     types:
+#       - closed
 on:
-  pull_request_target:
+  push:
     branches:
-      - main
-    types:
-      - closed
+      - main  # 'main' 브랜치에 push 이벤트가 발생하면 무조건 실행!
 
 jobs:
   # jobname
