@@ -7,61 +7,112 @@ on:
 
 
 jobs:
-  # jobname
-  build-deploy:
-    # 수행 조건
+  build-and-deploy:
+    # PR이 머지(merged)된 경우에만 job을 실행
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
+      # 1. 머지된 최종 코드를 체크아웃
+      - name: Checkout merged code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
-      - name: Login to Docker hub
-        uses: docker/login-action@v1
+      # 2. Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker build and push
-        uses: docker/build-push-action@v2
+      # 3. Docker 이미지 빌드 및 푸시 (고유한 태그 사용)
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:${{ github.event.pull_request.merge_commit_sha }}
 
-      # - name: Beanstalk Deploy
-      #   uses: einaregilsson/beanstalk-deploy@v20
-      #   with:
-      #     aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
-      #     environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
-      #     region: ap-northeast-2
-      #     version_label: app-${{ github.event.pull_request.merge_commit_sha }}
-      #     deployment_package: Dockerrun.aws.json
-      #     use_existing_version_if_available: true
+      # 4. Dockerrun.aws.json 파일에 방금 푸시한 이미지 태그 반영
+      - name: Update Dockerrun.aws.json with new image tag
+        run: |
+          echo "Updating Dockerrun.aws.json"
+          sed -i 's|"Image": "[^"]*"|"Image": "${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:${{ github.event.pull_request.merge_commit_sha }}"|g' Dockerrun.aws.json
+          echo "Dockerrun.aws.json content:"
+          cat Dockerrun.aws.json
 
-
-      - name: Set version label
-        run: echo "VER=app-${GITHUB_SHA}-${GITHUB_RUN_ID}" >> $GITHUB_ENV
-
-      - name: Make unique Dockerrun
-        run: cp Dockerrun.aws.json Dockerrun-${{ env.VER }}.aws.json
-
-      - name: Beanstalk Deploy
+      # 5. Elastic Beanstalk에 배포
+      - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # ★★★★★ GitHub Secrets에서 올바른 값으로 수정했는지 확인!
           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
           region: ap-northeast-2
-          version_label: ${{ env.VER }}                     # 라벨도 유니크
-          deployment_package: Dockerrun-${{ env.VER }}.aws.json  # 파일명도 유니크
+          # ★★★★★ 절대로 겹치지 않는 고유한 버전 레이블
+          version_label: app-${{ github.event.pull_request.merge_commit_sha }}
+          deployment_package: Dockerrun.aws.json
           use_existing_version_if_available: true
 
 # jobs:
+#   # jobname
+#   build-deploy:
+#     # 수행 조건
+#     if: github.event.pull_request.merged == true
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout source code
+#         uses: actions/checkout@v2
+
+#       - name: Login to Docker hub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Docker build and push
+#         uses: docker/build-push-action@v2
+#         with:
+#           context: .
+#           file: ./Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+
+#       - name: Beanstalk Deploy
+#         uses: einaregilsson/beanstalk-deploy@v20
+#         with:
+#           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
+#           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
+#           region: ap-northeast-2
+#           version_label: app-${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
+#           deployment_package: Dockerrun.aws.json
+#           use_existing_version_if_available: true
+
+
+#       - name: Set version label
+#         run: echo "VER=app-${GITHUB_SHA}-${GITHUB_RUN_ID}" >> $GITHUB_ENV
+
+#       - name: Make unique Dockerrun
+#         run: cp Dockerrun.aws.json Dockerrun-${{ env.VER }}.aws.json
+
+#       - name: Beanstalk Deploy
+#         uses: einaregilsson/beanstalk-deploy@v22
+#         with:
+#           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
+#           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
+#           region: ap-northeast-2
+#           version_label: ${{ env.VER }}                     # 라벨도 유니크
+#           deployment_package: Dockerrun-${{ env.VER }}.aws.json  # 파일명도 유니크
+#           use_existing_version_if_available: true
+
+# # jobs:
 #   build-deploy:
 #     runs-on: ubuntu-latest
 
