@@ -23,34 +23,27 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 3. Docker 이미지 빌드 및 푸시 (고유한 커밋 해시 태그 사용)
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Docker build and push
+        uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           push: true
-          # ★★★ 푸시된 커밋의 고유 해시(github.sha)를 이미지 태그로 사용 ★★★
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
 
-      # 4. Dockerrun.aws.json 파일에 방금 푸시한 이미지 태그 반영
-      - name: Update Dockerrun.aws.json with new image tag
-        run: |
-          sed -i 's|"Image": "[^"]*"|"Image": "${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:${{ github.sha }}"|g' Dockerrun.aws.json
-
-      # 5. Elastic Beanstalk에 배포
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v22
+      - name: Beanstalk Deploy
+        uses: einaregilsson/beanstalk-deploy@v20
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_A C CESS_KEY }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
           region: ap-northeast-2
-          # ★★★ 푸시된 커밋의 고유 해시(github.sha)를 버전 레이블로 사용 ★★★
-          version_label: app-${{ github.sha }}
+          version_label: "app-${{ github.sha }}"
           deployment_package: Dockerrun.aws.json
-          # ★★★ 항상 새로 업로드하도록 false로 설정 ★★★
           use_existing_version_if_available: false
+
+
 
 
 # jobs:
