@@ -1,21 +1,14 @@
 name: Django CICD App
 
-# on:
-#   pull_request_target:
-#     branches:
-#       - main
-#     types:
-#       - closed
 on:
-  push:
+  pull_request_target:
     branches:
-      - main  # 'main' 브랜치에 push 이벤트가 발생하면 무조건 실행!
+      - main
+    types:
+      - closed
 
 jobs:
-  # jobname
   build-deploy:
-    # 수행 조건
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -43,6 +36,7 @@ jobs:
           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
           region: ap-northeast-2
-          version_label: "app-${{ github.sha }}"
+          version_label: app-${{ github.sha }}-${{ github.run_id }}
           deployment_package: Dockerrun.aws.json
+          use_existing_version_if_available: true
           use_existing_version_if_available: true
