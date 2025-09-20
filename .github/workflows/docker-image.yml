@@ -28,6 +28,15 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
 
+      -  # EB가 기대하는 소스 번들(zip) 생성
+      - name: Create EB bundle (.zip)
+        run: |
+          mkdir -p bundle
+          cp Dockerrun.aws.json bundle/
+          cd bundle
+          zip -r ../deploy-${{ github.sha }}.zip .  # zip 루트에 파일이 오도록 생성
+        # ↑ Dockerrun만 있어도 단일 컨테이너 배포 가능(EB 공식 문서) :contentReference[oaicite:3]{index=3}
+
       - name: Beanstalk Deploy
         uses: einaregilsson/beanstalk-deploy@v20
         with:
