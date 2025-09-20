@@ -1,25 +1,11 @@
-# Dockerfile
+# vLLM 본사에서 만든 완제품 이미지. torch, CUDA, vLLM이 모두 완벽하게 세팅되어 있음.
+FROM vllm/vllm-openai:latest
 
-# Python 3.12 이미지를 기반으로 사용
-FROM python:3.12
+# (선택사항) 나중에 HuggingFace의 비공개 모델을 쓸 때를 대비한 설정.
+# GitHub Secret에 HF_TOKEN을 추가해주면 작동함. 지금은 없어도 괜찮아.
+ENV HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
 
-# 환경 변수 설정
-# .pyc 파일 생성 방지
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Python 출력 버퍼링 방지
-ENV PYTHONUNBUFFERED=1
-
-# 작업 디렉토리 생성 및 설정 (그냥 app 으로 작성해도 돰) !!!!
-WORKDIR /app
-
-# 의존성 파일 복사 및 설치
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# 프로젝트 파일을 image 내부 WORKDIR로 복사
-COPY . .
-
-# Gunicorn으로 Django 실행
-ENTRYPOINT ["gunicorn", "-c", "gunicorn.conf.py"]
-EXPOSE 8000
+# 컨테이너가 실행되면, OpenAI API와 호환되는 방식으로 vLLM 서버를 시작하라는 명령어.
+# --model 뒤에는 네가 최종적으로 사용할 모델 이름을 적어주면 돼.
+# --port 8000은 Elastic Beanstalk가 기본적으로 사용하는 포트.
+CMD ["python", "-m", "vllm.entrypoints.openai.api_server", "--model", "gpt-4o-mini", "--port", "8000"]
