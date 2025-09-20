@@ -1,11 +1,24 @@
-# vLLM 본사에서 만든 완제품 이미지. torch, CUDA, vLLM이 모두 완벽하게 세팅되어 있음.
-FROM vllm/vllm-openai:latest
+# --- 1단계: 빌드 스테이지 (무거운 라이브러리 설치) ---
+FROM python:3.12 AS builder
 
-# (선택사항) 나중에 HuggingFace의 비공개 모델을 쓸 때를 대비한 설정.
-# GitHub Secret에 HF_TOKEN을 추가해주면 작동함. 지금은 없어도 괜찮아.
-ENV HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+WORKDIR /app
+COPY requirements.txt .
 
-# 컨테이너가 실행되면, OpenAI API와 호환되는 방식으로 vLLM 서버를 시작하라는 명령어.
-# --model 뒤에는 네가 최종적으로 사용할 모델 이름을 적어주면 돼.
-# --port 8000은 Elastic Beanstalk가 기본적으로 사용하는 포트.
-CMD ["python", "-m", "vllm.entrypoints.openai.api_server", "--model", "gpt-4o-mini", "--port", "8000"]
+# CPU 전용 경량화 토치 설치 (이미지 크기 줄이는 마법)
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+# --- 2단계: 최종 스테이지 (가벼운 최종 이미지) ---
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# 빌드 스테이지에서 설치된 라이브러리만 복사
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+
+# 프로젝트 전체 코드를 복사 (이제 .dockerignore 덕분에 안전해)
+COPY . .
+
+# Gunicorn으로 Django 앱 실행 (네 프로젝트 이름에 맞게 수정)
+# KB_FinAIssist 폴더 안에 wsgi.py 파일이 있으니 이게 맞아.
+CMD ["gunicorn", "KB_FinAIssist.wsgi:application", "--bind", "0.0.0.0:8000"]

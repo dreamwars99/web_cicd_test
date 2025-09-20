@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "skn143team/kb-fin-aissist:latest",
+    "Name": "dreamwars99/kb-fin-aissist:latest",
     "Update": "true"
   },
   "Ports": [
@@ -10,7 +10,6 @@
       "HostPort": 8000
     }
   ],
-  
   "Environment": {
     "DB_NAME": "$DB_NAME",
     "DB_USER": "$DB_USER",

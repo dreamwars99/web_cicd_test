@@ -38,5 +38,4 @@ jobs:
           region: ap-northeast-2
           version_label: app-${{ github.sha }}-${{ github.run_id }}
           deployment_package: Dockerrun.aws.json
-          use_existing_version_if_available: true
-          use_existing_version_if_available: true
+          use_existing_version_if_available: true 
