@@ -5,35 +5,93 @@ on:
     branches:
       - main
 
+# jobs:
+#   build-deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout source code
+#         uses: actions/checkout@v2
+
+#       - name: Login to Docker hub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Docker build and push
+#         uses: docker/build-push-action@v4
+#         with:
+#           context: .
+#           file: ./Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+
+#       - name: Beanstalk Deploy
+#         uses: einaregilsson/beanstalk-deploy@v21
+#         with:
+#           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
+#           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
+#           region: ap-northeast-2
+#           version_label: app-${{ github.sha }}-${{ github.run_id }}
+#           deployment_package: Dockerrun.aws.json
+#           use_existing_version_if_available: true 
+
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
 
-      - name: Login to Docker hub
-        uses: docker/login-action@v1
+    steps:
+      # 1) 소스 체크아웃
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker build and push
-        uses: docker/build-push-action@v4
+      # 3) 이미지 빌드/푸시 (latest + 불변태그 SHA)
+      - name: Build & push
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
 
+      # 4) Dockerrun에서 :latest를 SHA로 고정(권장)
+      - name: Pin image tag in Dockerrun
+        run: |
+          sed -i "s#:latest#:${GITHUB_SHA}#g" Dockerrun.aws.json
+
+      # 5) EB 소스 번들(zip) 생성: **ZIP 루트에 Dockerrun만** 있게 만들기
+      - name: Create EB bundle (.zip)
+        run: |
+          mkdir -p bundle
+          cp Dockerrun.aws.json bundle/
+          cd bundle
+          # zip 루트에 바로 Dockerrun이 오도록 상위 경로로 zip 생성
+          zip -r ../deploy-${{ github.sha }}.zip .
+          cd ..
+          # 디버그: zip 내용 확인 (루트에 파일 하나만 있어야 정석)
+          unzip -l deploy-${{ github.sha }}.zip
+
+      # 6) EB 배포 — zip 파일을 **deployment_package**로 넘긴다
       - name: Beanstalk Deploy
-        uses: einaregilsson/beanstalk-deploy@v21
+        uses: einaregilsson/beanstalk-deploy@v22
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
           environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
           region: ap-northeast-2
-          version_label: app-${{ github.sha }}-${{ github.run_id }}
-          deployment_package: Dockerrun.aws.json
-          use_existing_version_if_available: true 
+          version_label: app-${{ github.sha }}-${{ github.run_attempt }}  # 재시도에도 유니크
+          deployment_package: deploy-${{ github.sha }}.zip                # ← **반드시 ZIP 경로**
+          use_existing_version_if_available: true
