@@ -30,7 +30,13 @@ SECRET_KEY = "django-insecure-p2)a92tangx7n%9=wzr$cbi9_5u5nr#*s-v+l-%fjofp+c$+as
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.elasticbeanstalk.com']
+# ALLOWED_HOSTS = ['.elasticbeanstalk.com']
+ALLOWED_HOSTS = [
+  "finaissistweb-env.eba-idpf34w6.ap-northeast-2.elasticbeanstalk.com",
+  ".elasticbeanstalk.com",
+  "localhost", "127.0.0.1"
+]
+
 
 
 # Application definition
@@ -56,6 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # 배포용 정적파일 서빙
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -146,6 +153,10 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static', 
     os.path.join(BASE_DIR, 'static'),
 ]
+
+STORAGES = {
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}
+}
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
