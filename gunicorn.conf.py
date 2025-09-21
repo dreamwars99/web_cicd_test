@@ -9,7 +9,7 @@ print('workers =', workers)
 bind = '0.0.0.0:8000'
 
 # worker_class 기본값:sync(동기워커)
-# worker_class = 'uvicorn.workers.UvicornWorker'
+worker_class = 'uvicorn.workers.UvicornWorker'
 
 # wsgi_app 실행한 모듈 application
 wsgi_app = 'KB_FinAIssist.asgi:application'

@@ -20,5 +20,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Gunicorn으로 Django 앱 실행
-ENTRYPOINT ["gunicorn", "-c", "gunicorn.conf.py"]
+ENTRYPOINT ["gunicorn", "KB_FinAIssist.asgi:application", "-c", "gunicorn.conf.py"]
 EXPOSE 8000
