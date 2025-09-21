@@ -10,6 +10,9 @@ ENV PYTHONUNBUFFERED=1
 # 작업 디렉토리 설정
 WORKDIR /app
 
+# mysqlclient 설치에 필요한 시스템 개발 도구 먼저 설치
+RUN apt-get update && apt-get install -y build-essential libmysqlclient-dev && rm -rf /var/lib/apt/lists/*
+
 # 의존성 파일 먼저 복사
 COPY requirements.txt .
 
