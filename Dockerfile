@@ -1,7 +1,7 @@
 # Dockerfile
 
 # Python 3.12 이미지를 기반으로 사용
-FROM python:3.12
+FROM python:3.12-slim
 
 # 환경 변수 설정
 # .pyc 파일 생성 방지
