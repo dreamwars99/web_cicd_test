@@ -28,17 +28,17 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
 
-            - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v21
+      - name: Beanstalk Deploy
+        uses: einaregilsson/beanstalk-deploy@v20
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: FinAIssist
-          environment_name: Finaissist-env
-          version_label: "app-${{ github.sha }}-${{ github.run_number }}"
+          application_name: ${{ secrets.AWS_EB_APPLICATION_NAME }}
+          environment_name: ${{ secrets.AWS_EB_ENVIRONMENT_NAME }}
           region: ap-northeast-2
-          deployment_package: build-${{ steps.vars.outputs.sha_short }}.zip
-          wait_for_deployment: true
+          version_label: "app-${{ github.sha }}-${{ github.run_number }}"
+          deployment_package: Dockerrun.aws.json
+          use_existing_version_if_available: true
 
 
 
