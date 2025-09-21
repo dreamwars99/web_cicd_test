@@ -1,11 +1,17 @@
-# set -e: 에러시 중단, -u: 정의 안 된 변수 에러, -o pipefail: 파이프라인 에러 전파
+#!/bin/bash
 set -euo pipefail
 
-# 현재 실행 중인 앱 컨테이너 ID 하나 가져오기(단일 컨테이너 전제)
-CID=$(/usr/bin/docker ps --filter "name=eb" --format "{{.ID}}")
+# EB가 실행 중인 앱 컨테이너(이미지 기준) 하나 집기
+CID=$(docker ps --filter "ancestor=aws_beanstalk/current-app" --format "{{.ID}}" | head -n 1)
 
-# 마이그레이션 실행
-/usr/bin/docker exec "$CID" python manage.py migrate --noinput
+if [ -z "${CID:-}" ]; then
+  echo "[postdeploy] running app container not found"
+  docker ps
+  exit 1
+fi
 
-# 정적파일 수집(이미 Dockerfile에서 했다면 생략 가능)
-# /usr/bin/docker exec "$CID" python manage.py collectstatic --noinput
+# Django 마이그레이션
+docker exec "$CID" sh -lc 'python manage.py migrate --noinput'
+
+# 정적 파일 수집이 필요하면 주석 해제
+# docker exec "$CID" sh -lc 'python manage.py collectstatic --noinput'
