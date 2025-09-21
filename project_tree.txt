@@ -1,0 +1,31 @@
+프로젝트:
+c:\Workspaces\web_cicd_test\
+├─── .github/              # GitHub Actions 워크플로우
+│   └─── workflows/
+│       └─── docker-image.yml
+├─── f_calendar/           # Django 앱 (캘린더)
+├─── f_chatbot/            # Django 앱 (챗봇)
+├─── f_common/             # Django 앱 (공통 기능)
+├─── f_customer/           # Django 앱 (고객 정보)
+├─── f_document/           # Django 앱 (문서)
+├─── f_loan/               # Django 앱 (대출)
+├─── f_login/              # Django 앱 (로그인)
+├─── f_todo/               # Django 앱 (투두리스트)
+├─── f_user/               # Django 앱 (사용자)
+├─── KB_FinAIssist/        # Django 프로젝트 설정
+│   ├─── settings.py       # 메인 설정 파일
+│   ├─── settings_dev.py   # 개발용 설정
+│   ├─── settings_prod.py  # 운영용 설정
+│   └─── urls.py           # 메인 URL 설정
+├─── static/               # 정적 파일 (CSS, JS, 이미지)
+│   ├─── css/
+│   ├─── images/
+│   └─── js/
+├─── templates/            # HTML 템플릿
+│   └─── base.html
+├─── .gitignore            # Git 추적 제외 설정
+├─── Dockerfile            # Docker 이미지 빌드 설정
+├─── manage.py             # Django 관리 스크립트
+├─── package.json          # Node.js 의존성 관리
+├─── requirements.txt      # Python 의존성 관리
+└─── README.md             # 프로젝트 설명 파일

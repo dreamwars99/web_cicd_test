@@ -19,6 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 프로젝트 전체 파일 복사
 COPY . .
 
+RUN python manage.py collectstatic --noinput
+
 # Gunicorn으로 Django 앱 실행
 ENTRYPOINT ["gunicorn", "KB_FinAIssist.asgi:application", "-c", "gunicorn.conf.py"]
 EXPOSE 8000
